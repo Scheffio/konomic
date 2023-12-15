@@ -15,8 +15,7 @@ export const useOrderbook = defineStore('OrderBook', () => {
     }, {deep: true})
 
     const addToOrderBook = (object) => {
-        console.log(object);
-        orders.value.push({...object})
+        orders.value = object
     }
 
     return {

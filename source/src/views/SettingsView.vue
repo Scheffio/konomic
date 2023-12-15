@@ -64,8 +64,7 @@
     const logsStore = useLogs()
     const orderBookStore = useOrderbook()
 
-    const pair = ref('BTCUSDT')
-    let previousValue = ref(null)
+    const pair = ref()
 
     const formattedDate = computed(() => {
         const options = {
@@ -79,20 +78,23 @@
         return new Date().toLocaleDateString('ru-RU', options)
     })
 
+    if(localStorage.getItem('default-pair')) {
+        pair.value = localStorage.getItem('default-pair')
+    }else {
+        localStorage.setItem('default-pair', 'BTCUSDT')
+        pair.value = localStorage.getItem('default-pair')
+    }
+
     function handleUpdate(newValue) {
         const url = `https://api.binance.com/api/v3/depth?symbol=${pair.value}&limit=1000`
 
-        if (previousValue.value == null) {
-            previousValue.value = 'BTCUSDT'
-        }
-
         logsStore.addToLogs({
-            from: previousValue.value,
+            from: localStorage.getItem('default-pair'),
             to: newValue,
             time: formattedDate.value
         })
 
-        previousValue.value = pair.value;
+        localStorage.setItem('default-pair', newValue)
 
         fetch(url)
             .then(response => {
