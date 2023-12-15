@@ -1,5 +1,5 @@
 <template>
-    <header>
+    <!-- <header>
         <div class="logo">
             <div class="logo__div"></div>
         </div>
@@ -7,7 +7,7 @@
             <router-link class="menu__element" to="/">Настройки</router-link>
             <router-link class="menu__element" to="/order_book">Книга ордеров</router-link>
         </div>
-    </header>
+    </header> -->
     <main>
         <article>
             <v-container class="content">
@@ -22,7 +22,7 @@
                                         <th class="text-center">
                                             Price
                                         </th>
-                                        <th class="text-center" v-if="!isMobile">
+                                        <th class="text-center hidden-xs">
                                             Quantity
                                         </th>
                                         <th class="text-center">
@@ -34,8 +34,8 @@
                                     <tr v-for="(ask, askIndex) in orderBookStore.orders.asks.slice(0, tableLimit)"
                                         :key="askIndex">
                                         <td class="text-center">{{ ask[0] }}</td>
-                                        <td class="text-center" v-if="!isMobile">{{ ask[1] }}</td>
-                                        <td class="text-center">{{ Number(ask[0]) * Number(ask[1]) }}</td>
+                                        <td class="text-center hidden-xs">{{ ask[1] }}</td>
+                                        <td class="text-center">{{ calculateTotal(ask[0], ask[1]) }}</td>
                                     </tr>
                                 </tbody>
                             </v-table>
@@ -48,7 +48,7 @@
                                         <th class="text-center">
                                             Price
                                         </th>
-                                        <th class="text-center" v-if="!isMobile">
+                                        <th class="text-center hidden-xs">
                                             Quantity
                                         </th>
                                         <th class="text-center">
@@ -60,8 +60,8 @@
                                     <tr v-for="(bid, bidsIndex) in orderBookStore.orders.bids.slice(0, tableLimit)"
                                         :key="bidsIndex">
                                         <td class="text-center">{{ bid[0] }}</td>
-                                        <td class="text-center" v-if="!isMobile">{{ bid[1] }}</td>
-                                        <td class="text-center">{{ Number(bid[0]) * Number(bid[1]) }}</td>
+                                        <td class="text-center hidden-xs">{{ bid[1] }}</td>
+                                        <td class="text-center">{{ calculateTotal(bid[0], bid[1]) }}</td>
                                     </tr>
                                 </tbody>
                             </v-table>
@@ -69,7 +69,7 @@
                     </v-row>
                     <v-row>
                         <v-select label="Количество элементов в таблице" v-model="tableLimit" :items="[100, 500, 1000]"
-                            variant="outlined"></v-select>
+                            variant="outlined" @update:model-value="handleLimit"></v-select>
                     </v-row>
                 </article>
                 <p v-else>Ордеров не найдено</p>
@@ -80,11 +80,7 @@
 
 <script setup>
     import {
-        RouterLink
-    } from 'vue-router'
-    import {
         ref,
-        watchEffect,
         onBeforeMount,
         watch,
     } from 'vue'
@@ -98,27 +94,26 @@
 
     const tableHeight = ref()
 
-    const isMobile = ref()
-
-    const width = ref(window.innerWidth)
     const height = ref()
 
+    function calculateTotal(price, quantity) {
+        return Number(price) * Number(quantity)
+    }
+
+    function handleLimit(value) {
+        orderBookStore.tableLimit = value
+    }
+
     window.addEventListener('resize', () => {
-        width.value = window.innerWidth;
         height.value = window.screen.height
     })
 
     onBeforeMount(() => {
         height.value = window.screen.height
-        width.value = window.innerWidth
     })
 
     watch(() => height.value, (val) => {
         tableHeight.value = (height.value - 250) / 2
-    })
-
-    watch(() => width.value, (val) => {
-        isMobile.value = width.value < 600
     })
 
     const isOrdersExists = ref()

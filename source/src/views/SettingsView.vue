@@ -1,18 +1,9 @@
 <template>
-    <header>
-        <div class="logo">
-            <div class="logo__div"></div>
-        </div>
-        <div class="menu">
-            <router-link class="menu__element" to="/">Настройки</router-link>
-            <router-link class="menu__element" to="/order_book">Книга ордеров</router-link>
-        </div>
-    </header>
     <main>
         <article>
             <v-container class="content">
                 <h2>Валютная пара</h2>
-                <v-select v-model="pair" :items="['BTCUSDT', 'BNBBTC', 'ETHBTC']" variant="outlined"
+                <v-select v-model="orderBookStore.pair" :items="['BTCUSDT', 'BNBBTC', 'ETHBTC']" variant="outlined"
                     @update:model-value="handleUpdate" class="content__select">
                 </v-select>
                 <h2>Лог изменений</h2>
@@ -48,101 +39,27 @@
 
 <script setup>
     import {
-        RouterLink
-    } from 'vue-router'
-    import {
-        ref,
-        computed
+        ref
     } from 'vue'
     import {
         useLogs
     } from '@/stores/logs';
+    
     import {
         useOrderbook
-    } from '@/stores/orderbook'
+    } from '@/stores/orderbook';
 
     const logsStore = useLogs()
     const orderBookStore = useOrderbook()
 
-    const pair = ref()
-
-    const formattedDate = computed(() => {
-        const options = {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        }
-
-        return new Date().toLocaleDateString('ru-RU', options)
-    })
-
-    if(localStorage.getItem('default-pair')) {
-        pair.value = localStorage.getItem('default-pair')
-    }else {
-        localStorage.setItem('default-pair', 'BTCUSDT')
-        pair.value = localStorage.getItem('default-pair')
+    function handleUpdate(value) {
+        orderBookStore.pair = value
+        console.log(orderBookStore.pair, value);
     }
 
-    function handleUpdate(newValue) {
-        const url = `https://api.binance.com/api/v3/depth?symbol=${pair.value}&limit=1000`
-
-        logsStore.addToLogs({
-            from: localStorage.getItem('default-pair'),
-            to: newValue,
-            time: formattedDate.value
-        })
-
-        localStorage.setItem('default-pair', newValue)
-
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Ошибка HTTP! Статус: ${response.status}`)
-                }
-                return response.json()
-            }).then(data => {
-                orderBookStore.addToOrderBook(data)
-            }).catch(error => {
-                console.error('Ошибка: ', error.message, error.stack);
-            })
-    }
 </script>
 
 <style scoped lang="scss">
-    header {
-        width: 100%;
-        background-color: #282828;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: space-evenly;
-
-        .logo {
-            .logo__div {
-                background-color: #41B883;
-                width: 40px;
-                height: 40px;
-                border-radius: 100%;
-            }
-        }
-
-        .menu {
-            display: flex;
-            gap: 20px;
-
-            .menu__element {
-                transition: .3s;
-                cursor: pointer;
-
-                &:hover {
-                    opacity: .5;
-                }
-            }
-        }
-    }
-
     .content {
         display: flex;
         gap: 10px;
