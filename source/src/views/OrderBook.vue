@@ -12,7 +12,7 @@
         <article>
             <v-container class="content">
                 <h2>Книга ордеров</h2>
-                <article v-if="isOrdersExists" class="orders">
+                <article class="orders">
                     <v-row class="d-flex ma-2">
                         <v-col>
                             <h4>Аски</h4>
@@ -31,7 +31,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(ask, askIndex) in orderBookStore.orders.asks.slice(0, tableLimit)"
+                                    <tr v-for="(ask, askIndex) in orderBookStore.asks.slice(0, tableLimit)"
                                         :key="askIndex">
                                         <td class="text-center">{{ ask[0] }}</td>
                                         <td class="text-center hidden-xs">{{ ask[1] }}</td>
@@ -57,7 +57,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(bid, bidsIndex) in orderBookStore.orders.bids.slice(0, tableLimit)"
+                                    <tr v-for="(bid, bidsIndex) in orderBookStore.bids.slice(0, tableLimit)"
                                         :key="bidsIndex">
                                         <td class="text-center">{{ bid[0] }}</td>
                                         <td class="text-center hidden-xs">{{ bid[1] }}</td>
@@ -72,7 +72,6 @@
                             variant="outlined" @update:model-value="handleLimit"></v-select>
                     </v-row>
                 </article>
-                <p v-else>Ордеров не найдено</p>
             </v-container>
         </article>
     </main>
@@ -115,10 +114,6 @@
     watch(() => height.value, (val) => {
         tableHeight.value = (height.value - 250) / 2
     })
-
-    const isOrdersExists = ref()
-
-    localStorage.getItem('orders') ? isOrdersExists.value = true : isOrdersExists.value = false
 
 </script>
 

@@ -54,7 +54,6 @@
 
     function handleUpdate(value) {
         orderBookStore.pair = value
-        console.log(orderBookStore.pair, value);
     }
 
 </script>

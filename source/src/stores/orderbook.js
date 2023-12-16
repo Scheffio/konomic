@@ -2,6 +2,7 @@ import {
     defineStore
 } from "pinia";
 import {
+    computed,
     ref,
     watch
 } from 'vue'
@@ -11,13 +12,16 @@ import {
 } from "./logs";
 
 export const useOrderbook = defineStore('OrderBook', () => {
-    const orders = ref([])
+    const asks = ref([])
+    const bids = ref([])
 
     let tableLimit = ref(100)
 
-    const pair = ref('BTCUSDT')
+    let queryLimit = computed(() => {
+        return tableLimit.value + (tableLimit.value / 2)
+    })
 
-    const orderBookOnStorage = localStorage.getItem('orders')
+    const pair = ref('BTCUSDT')
 
     const logsStore = useLogs()
 
@@ -38,16 +42,6 @@ export const useOrderbook = defineStore('OrderBook', () => {
         pair.value = localStorage.getItem('default-pair')
     }
 
-    if (orderBookOnStorage) {
-        orders.value = JSON.parse(orderBookOnStorage)._value
-    }
-
-    watch(() => orders, (state) => {
-        localStorage.setItem('orders', JSON.stringify(state))
-    }, {
-        deep: true
-    })
-
     watch(pair, (newValue, oldValue) => {
         logsStore.addToLogs({
             from: oldValue,
@@ -58,29 +52,61 @@ export const useOrderbook = defineStore('OrderBook', () => {
     })
 
     const addToOrderBook = (object) => {
-        orders.value = object
-        console.log(object);
+        asks.value = object.asks
+        bids.value = object.bids
+    }
+
+    const setCurrencyGlassSocket = () => {
+        if (socket.value) socket.value.close()
+
+        socket.value = new WebSocket(`wss://stream.binance.com:9443/ws/${pair.value.toLowerCase()}@depth`)
+
+        socket.value.onmessage = function (event) {
+            const content = JSON.parse(event.data)
+
+            content.a.forEach((newAsk) => {
+                if (asks.value.length > queryLimit.value) asks.value.splice(queryLimit.value)
+
+                let index = asks.value.findIndex(ask => ask[0] == newAsk[0])
+                if (index >= 0) {
+                    if (newAsk[1] == 0) {
+                        asks.value.splice(index, 1)
+                    } else {
+                        asks.value[index][1] = newAsk[1]
+                    }
+                } else {
+                    if (newAsk[1] != 0) {
+                        asks.value.unshift(newAsk)
+                    }
+                }
+            })
+
+            content.b.forEach((newBid) => {
+                if (bids.valuelength > queryLimit.value) bids.value.splice(queryLimit.value)
+
+                let index = bids.value.findIndex(bid => bid[0] == newBid[0])
+                if (index >= 0) {
+                    if (newBid[1] == 0) {
+                        bids.value.splice(index, 1)
+                    } else {
+                        bids.value[index][1] = newBid[1]
+                    }
+                } else {
+                    if (newBid[1] != 0) {
+                        asks.value.unshift(newBid)
+                    }
+                }
+            })
+        }
     }
 
     watch(pair, () => {
-        if(socket.value) socket.value.close()
-
-        socket.value = new WebSocket(`wss://stream.binance.com:9443/ws/${pair.value.toLowerCase()}@depth`)
-        socket.value.onmessage = function (event) {
-            const content = JSON.parse(event.data)
-    
-            content.a.forEach((elem) => {
-                orders.value.asks.unshift(elem)
-            })
-            content.b.forEach((elem) => {
-                orders.value.bids.unshift(elem)
-            })
-        }
-    })
+        setCurrencyGlassSocket()
+    }, {immediate: true})
 
     const getOrderBook = () => {
 
-        const url = `https://api.binance.com/api/v3/depth?symbol=${pair.value}&limit=${tableLimit.value}`
+        const url = `https://api.binance.com/api/v3/depth?symbol=${pair.value}&limit=${queryLimit.value}`
 
         fetch(url)
             .then(response => {
@@ -102,11 +128,13 @@ export const useOrderbook = defineStore('OrderBook', () => {
     })
 
     return {
-        orders,
+        asks,
+        bids,
         addToOrderBook,
         tableLimit,
         getOrderBook,
         pair,
+        setCurrencyGlassSocket
     }
 
 })
