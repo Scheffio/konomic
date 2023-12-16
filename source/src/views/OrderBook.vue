@@ -1,13 +1,4 @@
 <template>
-    <!-- <header>
-        <div class="logo">
-            <div class="logo__div"></div>
-        </div>
-        <div class="menu">
-            <router-link class="menu__element" to="/">Настройки</router-link>
-            <router-link class="menu__element" to="/order_book">Книга ордеров</router-link>
-        </div>
-    </header> -->
     <main>
         <article>
             <v-container class="content">
